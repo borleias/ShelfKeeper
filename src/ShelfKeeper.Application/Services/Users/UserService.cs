@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using ShelfKeeper.Application.Interfaces;
 using ShelfKeeper.Domain.Entities;
 using ShelfKeeper.Application.Services.Users.Models;
+using ShelfKeeper.Shared.Common;
 
 namespace ShelfKeeper.Application.Services.Users
 {
@@ -36,20 +37,28 @@ namespace ShelfKeeper.Application.Services.Users
         /// </summary>
         /// <param name="command">The command containing user registration details.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains the response with the new user's details.</returns>
-        public async Task<CreateUserResponse> CreateUserAsync(CreateUserCommand command, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a <see cref="OperationResult{TValue}"/> with the new user's details.</returns>
+        public async Task<OperationResult<CreateUserResponse>> CreateUserAsync(CreateUserCommand command, CancellationToken cancellationToken)
         {
             User user = new User
             {
                 Email = command.Email,
                 PasswordHash = _passwordHasher.HashPassword(command.Password),
-                Name = command.Name
+                Name = command.Name,
+                CreatedAt = DateTime.UtcNow,
+                LastUpdatedAt = DateTime.UtcNow
             };
+
+            OperationResult validationOperationResult = user.Validate();
+            if (validationOperationResult.IsFailure)
+            {
+                return OperationResult<CreateUserResponse>.Failure(validationOperationResult.Errors);
+            }
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new CreateUserResponse(user.Id, user.Email, user.Name);
+            return OperationResult<CreateUserResponse>.Success(new CreateUserResponse(user.Id, user.Email, user.Name));
         }
 
         /// <summary>
@@ -57,20 +66,19 @@ namespace ShelfKeeper.Application.Services.Users
         /// </summary>
         /// <param name="query">The query containing user login credentials.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains the response with user details and a JWT token.</returns>
-        /// <exception cref="UnauthorizedAccessException">Thrown when invalid credentials are provided.</exception>
-        public async Task<LoginUserResponse> LoginUserAsync(LoginUserQuery query, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a <see cref="OperationResult{TValue}"/> with user details and a JWT token.</returns>
+        public async Task<OperationResult<LoginUserResponse>> LoginUserAsync(LoginUserQuery query, CancellationToken cancellationToken)
         {
             User user = await _context.Users.FirstOrDefaultAsync(u => u.Email == query.Email, cancellationToken);
 
             if (user == null || !_passwordHasher.VerifyPassword(query.Password, user.PasswordHash))
             {
-                throw new UnauthorizedAccessException("Invalid credentials.");
+                return OperationResult<LoginUserResponse>.Failure("Invalid credentials.", OperationErrorType.UnauthorizedError);
             }
 
             string token = _jwtService.GenerateToken(user.Id, user.Email, user.Name);
 
-            return new LoginUserResponse(user.Id, user.Email, user.Name, token);
+            return OperationResult<LoginUserResponse>.Success(new LoginUserResponse(user.Id, user.Email, user.Name, token));
         }
 
         /// <summary>
@@ -78,18 +86,28 @@ namespace ShelfKeeper.Application.Services.Users
         /// </summary>
         /// <param name="command">The command containing the user's email and new password.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task ResetPasswordAsync(ResetPasswordCommand command, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a <see cref="OperationResult"/> indicating success or failure.</returns>
+        public async Task<OperationResult> ResetPasswordAsync(ResetPasswordCommand command, CancellationToken cancellationToken)
         {
             User user = await _context.Users.FirstOrDefaultAsync(u => u.Email == command.Email, cancellationToken);
 
             if (user == null)
             {
-                return; // For security reasons, do not reveal if user exists or not
+                return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError); // For security reasons, do not reveal if user exists or not
             }
 
             user.PasswordHash = _passwordHasher.HashPassword(command.NewPassword);
+            user.LastUpdatedAt = DateTime.UtcNow;
+
+            OperationResult validationOperationResult = user.Validate();
+            if (validationOperationResult.IsFailure)
+            {
+                return validationOperationResult;
+            }
+
             await _context.SaveChangesAsync(cancellationToken);
+
+            return OperationResult.Success();
         }
 
         /// <summary>
@@ -97,18 +115,20 @@ namespace ShelfKeeper.Application.Services.Users
         /// </summary>
         /// <param name="command">The command containing the ID of the user to delete.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task DeleteUserAsync(DeleteUserCommand command, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a <see cref="OperationResult"/> indicating success or failure.</returns>
+        public async Task<OperationResult> DeleteUserAsync(DeleteUserCommand command, CancellationToken cancellationToken)
         {
             User user = await _context.Users.FindAsync(new object[] { command.UserId }, cancellationToken);
 
             if (user == null)
             {
-                return;
+                return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError);
             }
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync(cancellationToken);
+
+            return OperationResult.Success();
         }
     }
 }

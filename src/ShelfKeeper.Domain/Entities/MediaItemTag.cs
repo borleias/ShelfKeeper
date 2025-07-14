@@ -2,6 +2,10 @@
 // Copyright (c) ShelfKeeper. All rights reserved.
 // </copyright>
 
+using ShelfKeeper.Shared.Common;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace ShelfKeeper.Domain.Entities
 {
     /// <summary>
@@ -28,5 +32,31 @@ namespace ShelfKeeper.Domain.Entities
         /// Gets or sets the associated media tag.
         /// </summary>
         public MediaTag MediaTag { get; set; }
+
+        /// <summary>
+        /// Validates the media item tag entity properties.
+        /// </summary>
+        /// <returns>A <see cref="OperationResult"/> indicating the success or failure of the validation.</returns>
+        public OperationResult Validate()
+        {
+            List<OperationError> errors = new List<OperationError>();
+
+            if (MediaItemId == Guid.Empty)
+            {
+                errors.Add(new OperationError("Media item ID cannot be empty.", OperationErrorType.ValidationError));
+            }
+
+            if (MediaTagId == Guid.Empty)
+            {
+                errors.Add(new OperationError("Media tag ID cannot be empty.", OperationErrorType.ValidationError));
+            }
+
+            if (errors.Any())
+            {
+                return OperationResult.Failure(errors);
+            }
+
+            return OperationResult.Success();
+        }
     }
 }

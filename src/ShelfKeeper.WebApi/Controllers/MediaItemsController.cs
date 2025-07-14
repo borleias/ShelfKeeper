@@ -7,6 +7,7 @@ using Asp.Versioning;
 using ShelfKeeper.Application.Services.MediaItems;
 using ShelfKeeper.Application.Services.MediaItems.Models;
 using Microsoft.AspNetCore.Authorization;
+using ShelfKeeper.Shared.Common;
 
 namespace ShelfKeeper.WebApi.Controllers
 {
@@ -34,12 +35,12 @@ namespace ShelfKeeper.WebApi.Controllers
         /// Creates a new media item.
         /// </summary>
         /// <param name="command">The command containing the media item details.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateMediaItemCommand command)
         {
-            CreateMediaItemResponse response = await _mediaItemService.CreateMediaItemAsync(command, CancellationToken.None);
-            return CreatedAtAction(nameof(GetById), new { id = response.MediaItemId, userId = Guid.Empty }, response);
+            OperationResult<CreateMediaItemResponse> response = await _mediaItemService.CreateMediaItemAsync(command, CancellationToken.None);
+            return CreatedAtAction(nameof(GetById), new { id = response.Value.MediaItemId, userId = Guid.Empty }, response);
         }
 
         /// <summary>
@@ -47,16 +48,16 @@ namespace ShelfKeeper.WebApi.Controllers
         /// </summary>
         /// <param name="id">The ID of the media item.</param>
         /// <param name="userId">The ID of the user who owns the media item.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id, [FromQuery] Guid userId) // userId should come from authenticated user
         {
-            GetMediaItemByIdResponse response = await _mediaItemService.GetMediaItemByIdAsync(new GetMediaItemByIdQuery(id, userId), CancellationToken.None);
-            if (response == null)
+            OperationResult<GetMediaItemByIdResponse> response = await _mediaItemService.GetMediaItemByIdAsync(new GetMediaItemByIdQuery(id, userId), CancellationToken.None);
+            if (response.Value == null)
             {
                 return NotFound();
             }
-            return Ok(response);
+            return Ok(response.Value);
         }
 
         /// <summary>
@@ -64,7 +65,7 @@ namespace ShelfKeeper.WebApi.Controllers
         /// </summary>
         /// <param name="id">The ID of the media item to update.</param>
         /// <param name="command">The command containing the updated media item details.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateMediaItemCommand command)
         {
@@ -81,7 +82,7 @@ namespace ShelfKeeper.WebApi.Controllers
         /// </summary>
         /// <param name="id">The ID of the media item to delete.</param>
         /// <param name="userId">The ID of the user who owns the media item.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id, [FromQuery] Guid userId) // userId should come from authenticated user
         {
@@ -93,12 +94,12 @@ namespace ShelfKeeper.WebApi.Controllers
         /// Retrieves a list of media items.
         /// </summary>
         /// <param name="query">The query containing filtering, searching, and pagination parameters.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpGet]
         public async Task<IActionResult> List([FromQuery] ListMediaItemsQuery query)
         {
-            ListMediaItemsResponse response = await _mediaItemService.ListMediaItemsAsync(query, CancellationToken.None);
-            return Ok(response);
+            OperationResult<ListMediaItemsResponse> response = await _mediaItemService.ListMediaItemsAsync(query, CancellationToken.None);
+            return Ok(response.Value);
         }
     }
 }

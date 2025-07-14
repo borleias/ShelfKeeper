@@ -15,7 +15,7 @@ namespace ShelfKeeper.Application.Interfaces
         /// Scans a barcode asynchronously and returns a command to create a media item.
         /// </summary>
         /// <param name="barcode">The barcode string to scan.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="CreateMediaItemCommand"/> populated with data from the barcode scan.</returns>
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a <see cref="CreateMediaItemCommand"/> populated with data from the barcode scan.</returns>
         Task<CreateMediaItemCommand> ScanBarcodeAsync(string barcode);
     }
 }

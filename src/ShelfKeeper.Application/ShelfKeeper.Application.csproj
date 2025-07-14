@@ -2,10 +2,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ShelfKeeper.Domain\ShelfKeeper.Domain.csproj" />
+    <ProjectReference Include="..\ShelfKeeper.Shared\ShelfKeeper.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\" />
   </ItemGroup>
 
   <PropertyGroup>

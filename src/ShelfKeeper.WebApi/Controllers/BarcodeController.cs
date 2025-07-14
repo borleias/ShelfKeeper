@@ -8,6 +8,7 @@ using ShelfKeeper.Application.Interfaces;
 using ShelfKeeper.Application.Services.MediaItems;
 using ShelfKeeper.Application.Services.MediaItems.Models;
 using Microsoft.AspNetCore.Authorization;
+using ShelfKeeper.Shared.Common;
 
 namespace ShelfKeeper.WebApi.Controllers
 {
@@ -39,7 +40,7 @@ namespace ShelfKeeper.WebApi.Controllers
         /// </summary>
         /// <param name="barcode">The barcode to scan.</param>
         /// <param name="userId">The ID of the user performing the scan.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpGet("{barcode}")]
         public async Task<IActionResult> Scan(string barcode, [FromQuery] Guid userId) // userId should come from authenticated user
         {
@@ -47,8 +48,8 @@ namespace ShelfKeeper.WebApi.Controllers
             // Assign the actual UserId from the authenticated user
             CreateMediaItemCommand createMediaItemCommand = command with { UserId = userId };
 
-            CreateMediaItemResponse response = await _mediaItemService.CreateMediaItemAsync(createMediaItemCommand, CancellationToken.None);
-            return Ok(response);
+            OperationResult<CreateMediaItemResponse> response = await _mediaItemService.CreateMediaItemAsync(createMediaItemCommand, CancellationToken.None);
+            return Ok(response.Value);
         }
     }
 }

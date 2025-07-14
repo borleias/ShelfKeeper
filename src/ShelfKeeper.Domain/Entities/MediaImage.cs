@@ -3,6 +3,9 @@
 // </copyright>
 
 using ShelfKeeper.Domain.Common;
+using ShelfKeeper.Shared.Common;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ShelfKeeper.Domain.Entities
 {
@@ -25,5 +28,37 @@ namespace ShelfKeeper.Domain.Entities
         /// Gets or sets the URL of the image.
         /// </summary>
         public string ImageUrl { get; set; }
+
+        /// <summary>
+        /// Validates the media image entity properties.
+        /// </summary>
+        /// <returns>A <see cref="OperationResult"/> indicating the success or failure of the validation.</returns>
+        public new OperationResult Validate()
+        {
+            List<OperationError> errors = new List<OperationError>();
+
+            OperationResult baseValidation = base.Validate();
+            if (baseValidation.IsFailure)
+            {
+                errors.AddRange(baseValidation.Errors);
+            }
+
+            if (MediaItemId == Guid.Empty)
+            {
+                errors.Add(new OperationError("Media item ID cannot be empty.", OperationErrorType.ValidationError));
+            }
+
+            if (string.IsNullOrWhiteSpace(ImageUrl))
+            {
+                errors.Add(new OperationError("Image URL cannot be empty.", OperationErrorType.ValidationError));
+            }
+
+            if (errors.Any())
+            {
+                return OperationResult.Failure(errors);
+            }
+
+            return OperationResult.Success();
+        }
     }
 }

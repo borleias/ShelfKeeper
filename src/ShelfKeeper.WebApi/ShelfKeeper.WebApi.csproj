@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ShelfKeeper.Application\ShelfKeeper.Application.csproj" />
     <ProjectReference Include="..\ShelfKeeper.Infrastructure\ShelfKeeper.Infrastructure.csproj" />
+    <ProjectReference Include="..\ShelfKeeper.Shared\ShelfKeeper.Shared.csproj" />
   </ItemGroup>
 
 </Project>

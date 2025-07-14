@@ -7,6 +7,7 @@ using Asp.Versioning;
 using ShelfKeeper.Application.Services.Users;
 using ShelfKeeper.Application.Services.Users.Models;
 using Microsoft.AspNetCore.Authorization;
+using ShelfKeeper.Shared.Common;
 
 namespace ShelfKeeper.WebApi.Controllers
 {
@@ -34,37 +35,57 @@ namespace ShelfKeeper.WebApi.Controllers
         /// Registers a new user.
         /// </summary>
         /// <param name="command">The command containing user registration details.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] CreateUserCommand command)
         {
-            CreateUserResponse response = await _userService.CreateUserAsync(command, CancellationToken.None);
-            return CreatedAtAction(nameof(Register), new { id = response.UserId }, response);
+            OperationResult<CreateUserResponse> operationResult = await _userService.CreateUserAsync(command, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                return BadRequest(operationResult.Errors);
+            }
+            return CreatedAtAction(nameof(Register), new { id = operationResult.Value.UserId }, operationResult.Value);
         }
 
         /// <summary>
         /// Logs in a user and returns a JWT token.
         /// </summary>
         /// <param name="query">The query containing user login credentials.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserQuery query)
         {
-            LoginUserResponse response = await _userService.LoginUserAsync(query, CancellationToken.None);
-            return Ok(response);
+            OperationResult<LoginUserResponse> operationResult = await _userService.LoginUserAsync(query, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                if (operationResult.Errors.Any(e => e.Type == OperationErrorType.UnauthorizedError))
+                {
+                    return Unauthorized(operationResult.Errors);
+                }
+                return BadRequest(operationResult.Errors);
+            }
+            return Ok(operationResult.Value);
         }
 
         /// <summary>
         /// Resets a user's password.
         /// </summary>
         /// <param name="command">The command containing the user's email and new password.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost("reset-password")]
         public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
         {
-            await _userService.ResetPasswordAsync(command, CancellationToken.None);
+            OperationResult operationResult = await _userService.ResetPasswordAsync(command, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                if (operationResult.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
+                {
+                    return NotFound(operationResult.Errors);
+                }
+                return BadRequest(operationResult.Errors);
+            }
             return NoContent();
         }
 
@@ -72,11 +93,19 @@ namespace ShelfKeeper.WebApi.Controllers
         /// Deletes a user account.
         /// </summary>
         /// <param name="id">The ID of the user to delete.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the result of the operation.</returns>
+        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            await _userService.DeleteUserAsync(new DeleteUserCommand(id), CancellationToken.None);
+            OperationResult operationResult = await _userService.DeleteUserAsync(new DeleteUserCommand(id), CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                if (operationResult.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
+                {
+                    return NotFound(operationResult.Errors);
+                }
+                return BadRequest(operationResult.Errors);
+            }
             return NoContent();
         }
     }

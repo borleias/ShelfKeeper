@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using ShelfKeeper.Application.Interfaces;
 using ShelfKeeper.Domain.Entities;
 using ShelfKeeper.Application.Services.MediaItems.Models;
+using ShelfKeeper.Shared.Common;
 
 namespace ShelfKeeper.Application.Services.MediaItems
 {
@@ -30,8 +31,8 @@ namespace ShelfKeeper.Application.Services.MediaItems
         /// </summary>
         /// <param name="command">The command containing the media item details.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains the response with the new media item's details.</returns>
-        public async Task<CreateMediaItemResponse> CreateMediaItemAsync(CreateMediaItemCommand command, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains the response with the new media item's details.</returns>
+        public async Task<OperationResult<CreateMediaItemResponse>> CreateMediaItemAsync(CreateMediaItemCommand command, CancellationToken cancellationToken)
         {
             MediaItem mediaItem = new MediaItem
             {
@@ -50,7 +51,7 @@ namespace ShelfKeeper.Application.Services.MediaItems
             _context.MediaItems.Add(mediaItem);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return new CreateMediaItemResponse(mediaItem.Id, mediaItem.Title, mediaItem.Type);
+            return OperationResult<CreateMediaItemResponse>.Success(new CreateMediaItemResponse(mediaItem.Id, mediaItem.Title, mediaItem.Type));
         }
 
         /// <summary>
@@ -58,8 +59,8 @@ namespace ShelfKeeper.Application.Services.MediaItems
         /// </summary>
         /// <param name="query">The query containing the media item ID and user ID.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains the media item details, or null if not found.</returns>
-        public async Task<GetMediaItemByIdResponse> GetMediaItemByIdAsync(GetMediaItemByIdQuery query, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains the media item details, or null if not found.</returns>
+        public async Task<OperationResult<GetMediaItemByIdResponse>> GetMediaItemByIdAsync(GetMediaItemByIdQuery query, CancellationToken cancellationToken)
         {
             MediaItem mediaItem = await _context.MediaItems
                 .Include(mi => mi.Location)
@@ -71,7 +72,7 @@ namespace ShelfKeeper.Application.Services.MediaItems
                 return null; // Or throw NotFoundException
             }
 
-            return new GetMediaItemByIdResponse(
+            return OperationResult<GetMediaItemByIdResponse>.Success(new GetMediaItemByIdResponse(
                 mediaItem.Id,
                 mediaItem.Title,
                 mediaItem.Type,
@@ -83,7 +84,7 @@ namespace ShelfKeeper.Application.Services.MediaItems
                 mediaItem.LocationId,
                 mediaItem.Location?.Title,
                 mediaItem.AuthorId,
-                mediaItem.Author?.Name
+                mediaItem.Author?.Name)
             );
         }
 
@@ -93,14 +94,14 @@ namespace ShelfKeeper.Application.Services.MediaItems
         /// <param name="command">The command containing the updated media item details.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task UpdateMediaItemAsync(UpdateMediaItemCommand command, CancellationToken cancellationToken)
+        public async Task<OperationResult> UpdateMediaItemAsync(UpdateMediaItemCommand command, CancellationToken cancellationToken)
         {
             MediaItem mediaItem = await _context.MediaItems
                 .FirstOrDefaultAsync(mi => mi.Id == command.MediaItemId && mi.UserId == command.UserId, cancellationToken);
 
             if (mediaItem == null)
             {
-                return; // Or throw NotFoundException
+                return OperationResult.Failure("Not found", OperationErrorType.NotFoundError); // Or throw NotFoundException
             }
 
             mediaItem.Title = command.Title;
@@ -113,6 +114,8 @@ namespace ShelfKeeper.Application.Services.MediaItems
             mediaItem.AuthorId = command.AuthorId;
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            return OperationResult.Success();
         }
 
         /// <summary>
@@ -121,18 +124,20 @@ namespace ShelfKeeper.Application.Services.MediaItems
         /// <param name="command">The command containing the ID of the media item to delete and the user ID.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-        public async Task DeleteMediaItemAsync(DeleteMediaItemCommand command, CancellationToken cancellationToken)
+        public async Task<OperationResult> DeleteMediaItemAsync(DeleteMediaItemCommand command, CancellationToken cancellationToken)
         {
             MediaItem mediaItem = await _context.MediaItems
                 .FirstOrDefaultAsync(mi => mi.Id == command.MediaItemId && mi.UserId == command.UserId, cancellationToken);
 
             if (mediaItem == null)
             {
-                return;
+                return OperationResult.Failure("Not found", OperationErrorType.NotFoundError);
             }
 
             _context.MediaItems.Remove(mediaItem);
             await _context.SaveChangesAsync(cancellationToken);
+
+            return OperationResult.Success();
         }
 
         /// <summary>
@@ -140,8 +145,8 @@ namespace ShelfKeeper.Application.Services.MediaItems
         /// </summary>
         /// <param name="query">The query containing filtering, searching, and pagination parameters.</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a paginated list of media items.</returns>
-        public async Task<ListMediaItemsResponse> ListMediaItemsAsync(ListMediaItemsQuery query, CancellationToken cancellationToken)
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a paginated list of media items.</returns>
+        public async Task<OperationResult<ListMediaItemsResponse>> ListMediaItemsAsync(ListMediaItemsQuery query, CancellationToken cancellationToken)
         {
             IQueryable<MediaItem> mediaItemsQuery = _context.MediaItems
                 .Include(mi => mi.Location)
@@ -210,7 +215,7 @@ namespace ShelfKeeper.Application.Services.MediaItems
                 ))
                 .ToListAsync(cancellationToken);
 
-            return new ListMediaItemsResponse(mediaItems, totalCount, query.PageNumber, query.PageSize);
+            return OperationResult<ListMediaItemsResponse>.Success(new ListMediaItemsResponse(mediaItems, totalCount, query.PageNumber, query.PageSize));
         }
     }
 }

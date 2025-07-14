@@ -125,7 +125,7 @@ app.UseSerilogRequestLogging(); // Add Serilog for request logging
 
 app.UseHttpsRedirection();
 
-// Global Error Handling Middleware
+// Global OperationError Handling Middleware
 app.Use(async (context, next) =>
 {
     try

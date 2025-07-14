@@ -17,7 +17,7 @@ namespace ShelfKeeper.Infrastructure.Services
         /// Currently returns dummy data. Actual API calls to Google Books API, Open Library, UPCitemDB are pending implementation.
         /// </summary>
         /// <param name="barcode">The barcode string to scan.</param>
-        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="CreateMediaItemCommand"/> populated with dummy data.</returns>
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task operationResult contains a <see cref="CreateMediaItemCommand"/> populated with dummy data.</returns>
         public async Task<CreateMediaItemCommand> ScanBarcodeAsync(string barcode)
         {
             // TODO: Implement actual API calls to Google Books API, Open Library, UPCitemDB
