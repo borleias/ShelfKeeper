@@ -1,0 +1,17 @@
+feat: Implement core features and refactor architecture
+
+This commit introduces the following major changes:
+
+- **Project Structure:** Established a Clean Architecture pattern with Domain, Application, Infrastructure, and WebApi layers.
+- **Entity Definitions:** Defined core entities (User, MediaItem, Author, Location, Tag, Subscription, Image) in the Domain layer.
+- **Database Setup:** Configured PostgreSQL with Docker Compose, including schema and extensive seed data for all entities.
+- **User Management:** Implemented user registration, login (with JWT authentication), password reset, and account deletion.
+- **Media Item Management:** Implemented CRUD operations for media items, including listing with search, filter, and dynamic sorting.
+- **Barcode Scanning:** Added a placeholder service for barcode scanning integration.
+- **Security:** Integrated JWT authentication and BCrypt password hashing.
+- **Observability:** Configured Serilog for logging and OpenTelemetry for tracing and metrics (Prometheus exporter).
+- **API Versioning:** Implemented API versioning for future extensibility.
+- **Code Quality:** Removed MediatR, replaced `var` with explicit types, and added comprehensive XML documentation to all methods and file headers.
+- **Docker Integration:** Ensured the Web API is runnable within Docker Compose.
+
+This commit addresses the initial MVP requirements and sets a solid foundation for future development.
