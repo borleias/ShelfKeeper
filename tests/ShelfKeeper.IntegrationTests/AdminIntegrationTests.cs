@@ -1,0 +1,126 @@
+// <copyright file="AdminIntegrationTests.cs" company="ShelfKeeper">
+// Copyright (c) ShelfKeeper. All rights reserved.
+// </copyright>
+
+using Xunit;
+using System.Net.Http.Json;
+using System.Net;
+using ShelfKeeper.Application.Services.Users.Models;
+using ShelfKeeper.Shared.Common;
+using ShelfKeeper.Domain.Common;
+
+namespace ShelfKeeper.IntegrationTests
+{
+    public class AdminIntegrationTests : IntegrationTestBase
+    {
+        public AdminIntegrationTests(CustomWebApplicationFactory factory) : base(factory)
+        {
+        }
+
+        [Fact]
+        public async Task GetAllUsers_AsAdmin_ShouldReturnAllUsers()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            // Act
+            var response = await _client.GetAsync("/api/v1/admin/users");
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var users = await response.Content.ReadFromJsonAsync<List<UserDto>>();
+            Assert.NotNull(users);
+            Assert.True(users.Count >= 1); // At least the admin user
+        }
+
+        [Fact]
+        public async Task GetAllUsers_AsRegularUser_ShouldReturnForbidden()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsUserAsync("alice@example.com", "password123"); // Assuming alice is a regular user
+
+            // Act
+            var response = await _client.GetAsync("/api/v1/admin/users");
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetUserById_AsAdmin_ShouldReturnUser()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            // Assuming a user with ID exists from seed data or previous test
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            var userIdToFetch = allUsers.First(u => u.Email == "alice@example.com").UserId;
+
+            // Act
+            var response = await _client.GetAsync($"/api/v1/admin/users/{userIdToFetch}");
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            var user = await response.Content.ReadFromJsonAsync<UserDto>();
+            Assert.NotNull(user);
+            Assert.Equal(userIdToFetch, user.UserId);
+        }
+
+        [Fact]
+        public async Task UpdateUserRole_AsAdmin_ShouldUpdateRole()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            var userIdToUpdate = allUsers.First(u => u.Email == "alice@example.com").UserId;
+
+            var command = new UpdateUserRoleCommand(userIdToUpdate, UserRole.Admin.ToString());
+
+            // Act
+            var response = await _client.PutAsJsonAsync($"/api/v1/admin/users/{userIdToUpdate}/role", command);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Verify role updated
+            var updatedUserResponse = await _client.GetAsync($"/api/v1/admin/users/{userIdToUpdate}");
+            updatedUserResponse.EnsureSuccessStatusCode();
+            var updatedUser = await updatedUserResponse.Content.ReadFromJsonAsync<UserDto>();
+            Assert.Equal(UserRole.Admin.ToString(), updatedUser.Role);
+        }
+
+        [Fact]
+        public async Task DeleteUser_AsAdmin_ShouldDeleteUser()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            var userIdToDelete = allUsers.First(u => u.Email == "alice@example.com").UserId;
+
+            // Act
+            var response = await _client.DeleteAsync($"/api/v1/admin/users/{userIdToDelete}");
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Verify user is deleted
+            var deletedUserResponse = await _client.GetAsync($"/api/v1/admin/users/{userIdToDelete}");
+            Assert.Equal(HttpStatusCode.NotFound, deletedUserResponse.StatusCode);
+        }
+    }
+}
