@@ -8,6 +8,7 @@ using ShelfKeeper.Application.Services.MediaItems;
 using ShelfKeeper.Application.Services.MediaItems.Models;
 using Microsoft.AspNetCore.Authorization;
 using ShelfKeeper.Shared.Common;
+using System.Security.Claims;
 
 namespace ShelfKeeper.WebApi.Controllers
 {
@@ -39,19 +40,21 @@ namespace ShelfKeeper.WebApi.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateMediaItemCommand command)
         {
-            OperationResult<CreateMediaItemResponse> response = await _mediaItemService.CreateMediaItemAsync(command, CancellationToken.None);
-            return CreatedAtAction(nameof(GetById), new { id = response.Value.MediaItemId, userId = Guid.Empty }, response);
+            var userId = GetUserId();
+            var createCommand = command with { UserId = userId };
+            OperationResult<CreateMediaItemResponse> response = await _mediaItemService.CreateMediaItemAsync(createCommand, CancellationToken.None);
+            return CreatedAtAction(nameof(GetById), new { id = response.Value.MediaItemId }, response.Value);
         }
 
         /// <summary>
         /// Retrieves a media item by its ID.
         /// </summary>
         /// <param name="id">The ID of the media item.</param>
-        /// <param name="userId">The ID of the user who owns the media item.</param>
         /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id, [FromQuery] Guid userId) // userId should come from authenticated user
+        public async Task<IActionResult> GetById(Guid id)
         {
+            var userId = GetUserId();
             OperationResult<GetMediaItemByIdResponse> response = await _mediaItemService.GetMediaItemByIdAsync(new GetMediaItemByIdQuery(id, userId), CancellationToken.None);
             if (response.Value == null)
             {
@@ -73,7 +76,9 @@ namespace ShelfKeeper.WebApi.Controllers
             {
                 return BadRequest();
             }
-            await _mediaItemService.UpdateMediaItemAsync(command, CancellationToken.None);
+            var userId = GetUserId();
+            var updateCommand = command with { UserId = userId };
+            await _mediaItemService.UpdateMediaItemAsync(updateCommand, CancellationToken.None);
             return NoContent();
         }
 
@@ -81,11 +86,11 @@ namespace ShelfKeeper.WebApi.Controllers
         /// Deletes a media item.
         /// </summary>
         /// <param name="id">The ID of the media item to delete.</param>
-        /// <param name="userId">The ID of the user who owns the media item.</param>
         /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id, [FromQuery] Guid userId) // userId should come from authenticated user
+        public async Task<IActionResult> Delete(Guid id)
         {
+            var userId = GetUserId();
             await _mediaItemService.DeleteMediaItemAsync(new DeleteMediaItemCommand(id, userId), CancellationToken.None);
             return NoContent();
         }
@@ -98,8 +103,20 @@ namespace ShelfKeeper.WebApi.Controllers
         [HttpGet]
         public async Task<IActionResult> List([FromQuery] ListMediaItemsQuery query)
         {
-            OperationResult<ListMediaItemsResponse> response = await _mediaItemService.ListMediaItemsAsync(query, CancellationToken.None);
+            var userId = GetUserId();
+            var listQuery = query with { UserId = userId };
+            OperationResult<ListMediaItemsResponse> response = await _mediaItemService.ListMediaItemsAsync(listQuery, CancellationToken.None);
             return Ok(response.Value);
+        }
+
+        private Guid GetUserId()
+        {
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub");
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
+            {
+                return userId;
+            }
+            return Guid.Empty;
         }
     }
 }

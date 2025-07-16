@@ -8,6 +8,7 @@ using ShelfKeeper.Application.Services.Users;
 using ShelfKeeper.Application.Services.Users.Models;
 using Microsoft.AspNetCore.Authorization;
 using ShelfKeeper.Shared.Common;
+using System.Security.Claims;
 
 namespace ShelfKeeper.WebApi.Controllers
 {
@@ -34,8 +35,6 @@ namespace ShelfKeeper.WebApi.Controllers
         /// <summary>
         /// Registers a new user.
         /// </summary>
-        /// <param name="command">The command containing user registration details.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost("register")]
         [AllowAnonymous]
         public async Task<IActionResult> Register([FromBody] CreateUserCommand command)
@@ -51,8 +50,6 @@ namespace ShelfKeeper.WebApi.Controllers
         /// <summary>
         /// Logs in a user and returns a JWT token.
         /// </summary>
-        /// <param name="query">The query containing user login credentials.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost("login")]
         [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginUserQuery query)
@@ -70,14 +67,64 @@ namespace ShelfKeeper.WebApi.Controllers
         }
 
         /// <summary>
-        /// Resets a user's password.
+        /// Changes the current user's password.
         /// </summary>
-        /// <param name="command">The command containing the user's email and new password.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
-        [HttpPost("reset-password")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordCommand command)
+        [HttpPost("change-password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordCommand command)
         {
-            OperationResult operationResult = await _userService.ResetPasswordAsync(command, CancellationToken.None);
+            var userId = GetUserId();
+            if (userId == Guid.Empty || userId != command.UserId)
+            {
+                return Unauthorized();
+            }
+
+            OperationResult operationResult = await _userService.ChangePasswordAsync(command, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                return BadRequest(operationResult.Errors);
+            }
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Initiates the password reset process for a user.
+        /// </summary>
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordCommand command)
+        {
+            await _userService.ForgotPasswordAsync(command, CancellationToken.None);
+            return NoContent(); // Always return success
+        }
+
+        /// <summary>
+        /// Resets a user's password using a reset token.
+        /// </summary>
+        [HttpPost("reset-password-with-token")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ResetPasswordWithToken([FromBody] ResetPasswordWithTokenCommand command)
+        {
+            OperationResult operationResult = await _userService.ResetPasswordWithTokenAsync(command, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                return BadRequest(operationResult.Errors);
+            }
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Deletes the currently authenticated user's account.
+        /// </summary>
+        [HttpDelete("me")]
+        public async Task<IActionResult> Delete()
+        {
+            var userId = GetUserId();
+            if (userId == Guid.Empty)
+            {
+                return Unauthorized();
+            }
+
+            OperationResult operationResult = await _userService.DeleteUserAsync(new DeleteUserCommand(userId), CancellationToken.None);
             if (operationResult.IsFailure)
             {
                 if (operationResult.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
@@ -89,24 +136,14 @@ namespace ShelfKeeper.WebApi.Controllers
             return NoContent();
         }
 
-        /// <summary>
-        /// Deletes a user account.
-        /// </summary>
-        /// <param name="id">The ID of the user to delete.</param>
-        /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        private Guid GetUserId()
         {
-            OperationResult operationResult = await _userService.DeleteUserAsync(new DeleteUserCommand(id), CancellationToken.None);
-            if (operationResult.IsFailure)
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier || c.Type == "sub");
+            if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out Guid userId))
             {
-                if (operationResult.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
-                {
-                    return NotFound(operationResult.Errors);
-                }
-                return BadRequest(operationResult.Errors);
+                return userId;
             }
-            return NoContent();
+            return Guid.Empty;
         }
     }
 }

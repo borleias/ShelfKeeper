@@ -22,7 +22,9 @@ Damit du von Anfang an **geringste Hürden beim Hinzufügen** hast und eine ger�
 * Konto erstellen (E-Mail, Passwort)
 * Login & Logout
 * Passwort-Reset („Passwort vergessen“)
+* Passwort ändern
 * Account löschen
+* Administratorzugang, um Nutzer global zu verwalten
 
 #### 📚 Medienverwaltung (Metadaten)
 
@@ -153,7 +155,7 @@ Die Anwendung soll monetarisiert werden durch ein Abomodell, das:
 
 * Nutzer wechselt Plan (z. B. Plus → Premium).
 
-#### Zahlung fehlgeschlagen / Mahnungen	
+#### Zahlung fehlgeschlagen / Mahnungen
 
 * System sperrt Features, erinnert Nutzer.
 
@@ -184,7 +186,7 @@ Die Anwendung soll monetarisiert werden durch ein Abomodell, das:
 * zusätzliche Erstellung praktischer Views, z. B.:
   * alle Medien inkl. Standort & Tags
   * alle SharedLists inkl. Likes & Kommentare
-* Nutzung von Seed-Daten, damit du direkt Beispielnutzer, Medien, Tags etc. hast, um deine Anwendung & Abfragen zu testen.
+* Nutzung von Seed-Daten (mind. jeweils 10 Datensätze), damit du direkt Beispielnutzer, Medien, Tags etc. hast, um deine Anwendung & Abfragen zu testen.
 
 ### 👤 Users
 
@@ -292,6 +294,7 @@ Die Anwendung soll monetarisiert werden durch ein Abomodell, das:
 * Health Checks unter /health
 * Prometheus Metriken unter /metrics
 * API-Versioning über den URL-Pfad wie `/api/v1/...`
+* verwende kein `var`
 
 ## Qualitätssicherung
 
