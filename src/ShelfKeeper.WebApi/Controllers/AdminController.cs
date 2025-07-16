@@ -117,5 +117,57 @@ namespace ShelfKeeper.WebApi.Controllers
             }
             return NoContent();
         }
+
+        /// <summary>
+        /// Updates a user's data as an administrator.
+        /// </summary>
+        /// <param name="id">The ID of the user to update.</param>
+        /// <param name="command">The command containing the user's updated details.</param>
+        /// <returns>No content.</returns>
+        [HttpPut("users/{id}")]
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserCommand command)
+        {
+            if (id != command.UserId)
+            {
+                return BadRequest();
+            }
+
+            OperationResult operationResult = await _adminUserService.UpdateUserAsAdminAsync(command, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                if (operationResult.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
+                {
+                    return NotFound(operationResult.Errors);
+                }
+                return BadRequest(operationResult.Errors);
+            }
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Resets a user's password as an administrator.
+        /// </summary>
+        /// <param name="id">The ID of the user whose password is to be reset.</param>
+        /// <param name="command">The command containing the user's new password.</param>
+        /// <returns>No content.</returns>
+        [HttpPost("users/{id}/reset-password")]
+        public async Task<IActionResult> AdminResetPassword(Guid id, [FromBody] AdminResetPasswordCommand command)
+        {
+            if (id != command.UserId)
+            {
+                return BadRequest();
+            }
+
+            OperationResult operationResult = await _adminUserService.AdminResetPasswordAsync(command, CancellationToken.None);
+            if (operationResult.IsFailure)
+            {
+                if (operationResult.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
+                {
+                    return NotFound(operationResult.Errors);
+                }
+                return BadRequest(operationResult.Errors);
+            }
+            return NoContent();
+        }
     }
 }

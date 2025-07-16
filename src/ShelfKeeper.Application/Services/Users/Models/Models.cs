@@ -64,4 +64,19 @@ namespace ShelfKeeper.Application.Services.Users.Models
     /// <param name="UserId">The ID of the user whose role is to be updated.</param>
     /// <param name="NewRole">The new role for the user.</param>
     public record UpdateUserRoleCommand(Guid UserId, string NewRole);
+
+    /// <summary>
+    /// Represents a command to update a user's data as an administrator.
+    /// </summary>
+    /// <param name="UserId">The ID of the user to update.</param>
+    /// <param name="Email">The new email address of the user.</param>
+    /// <param name="Name">The new name of the user.</param>
+    public record UpdateUserCommand(Guid UserId, string Email, string Name);
+
+    /// <summary>
+    /// Represents a command to reset a user's password as an administrator.
+    /// </summary>
+    /// <param name="UserId">The ID of the user whose password is to be reset.</param>
+    /// <param name="NewPassword">The new password for the user.</param>
+    public record AdminResetPasswordCommand(Guid UserId, string NewPassword);
 }

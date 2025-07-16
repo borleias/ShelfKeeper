@@ -37,7 +37,8 @@ builder.Host.UseSerilog();
 // Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+builder.Services.AddScoped<IAdminUserService, AdminUserService>(provider =>
+    new AdminUserService(provider.GetRequiredService<IApplicationDbContext>(), provider.GetRequiredService<IPasswordHasher>()));
 builder.Services.AddScoped<IMediaItemService, MediaItemService>();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

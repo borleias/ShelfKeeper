@@ -17,14 +17,17 @@ namespace ShelfKeeper.Application.Services.Users
     public class AdminUserService : IAdminUserService
     {
         private readonly IApplicationDbContext _context;
+        private readonly IPasswordHasher _passwordHasher;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AdminUserService"/> class.
         /// </summary>
         /// <param name="context">The application database context.</param>
-        public AdminUserService(IApplicationDbContext context)
+        /// <param name="passwordHasher">The password hashing service.</param>
+        public AdminUserService(IApplicationDbContext context, IPasswordHasher passwordHasher)
         {
             _context = context;
+            _passwordHasher = passwordHasher;
         }
 
         /// <summary>
@@ -87,6 +90,47 @@ namespace ShelfKeeper.Application.Services.Users
             }
 
             _context.Users.Remove(user);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return OperationResult.Success();
+        }
+
+        /// <summary>
+        /// Updates a user's data as an administrator asynchronously.
+        /// </summary>
+        public async Task<OperationResult> UpdateUserAsAdminAsync(UpdateUserCommand command, CancellationToken cancellationToken)
+        {
+            User user = await _context.Users.FindAsync(new object[] { command.UserId }, cancellationToken);
+
+            if (user == null)
+            {
+                return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError);
+            }
+
+            user.Email = command.Email;
+            user.Name = command.Name;
+            user.LastUpdatedAt = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync(cancellationToken);
+
+            return OperationResult.Success();
+        }
+
+        /// <summary>
+        /// Resets a user's password as an administrator asynchronously.
+        /// </summary>
+        public async Task<OperationResult> AdminResetPasswordAsync(AdminResetPasswordCommand command, CancellationToken cancellationToken)
+        {
+            User user = await _context.Users.FindAsync(new object[] { command.UserId }, cancellationToken);
+
+            if (user == null)
+            {
+                return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError);
+            }
+
+            user.PasswordHash = _passwordHasher.HashPassword(command.NewPassword);
+            user.LastUpdatedAt = DateTime.UtcNow;
+
             await _context.SaveChangesAsync(cancellationToken);
 
             return OperationResult.Success();

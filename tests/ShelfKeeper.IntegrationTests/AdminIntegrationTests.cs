@@ -122,5 +122,61 @@ namespace ShelfKeeper.IntegrationTests
             var deletedUserResponse = await _client.GetAsync($"/api/v1/admin/users/{userIdToDelete}");
             Assert.Equal(HttpStatusCode.NotFound, deletedUserResponse.StatusCode);
         }
+
+        [Fact]
+        public async Task UpdateUser_AsAdmin_ShouldUpdateUserData()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            var userIdToUpdate = allUsers.First(u => u.Email == "alice@example.com").UserId;
+
+            var command = new UpdateUserCommand(userIdToUpdate, "alice_updated@example.com", "Alice Updated");
+
+            // Act
+            var response = await _client.PutAsJsonAsync($"/api/v1/admin/users/{userIdToUpdate}", command);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Verify update
+            var updatedUserResponse = await _client.GetAsync($"/api/v1/admin/users/{userIdToUpdate}");
+            updatedUserResponse.EnsureSuccessStatusCode();
+            var updatedUser = await updatedUserResponse.Content.ReadFromJsonAsync<UserDto>();
+            Assert.Equal("alice_updated@example.com", updatedUser.Email);
+            Assert.Equal("Alice Updated", updatedUser.Name);
+        }
+
+        [Fact]
+        public async Task AdminResetPassword_AsAdmin_ShouldResetPassword()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            var userIdToResetPassword = allUsers.First(u => u.Email == "alice@example.com").UserId;
+
+            var command = new AdminResetPasswordCommand(userIdToResetPassword, "NewAdminPassword123!");
+
+            // Act
+            var response = await _client.PostAsJsonAsync($"/api/v1/admin/users/{userIdToResetPassword}/reset-password", command);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Verify new password works
+            var loginQuery = new LoginUserQuery("alice@example.com", "NewAdminPassword123!");
+            var loginResponse = await _client.PostAsJsonAsync("/api/v1/users/login", loginQuery);
+            loginResponse.EnsureSuccessStatusCode();
+        }
     }
 }

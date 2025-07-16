@@ -44,5 +44,21 @@ namespace ShelfKeeper.Application.Services.Users
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="OperationResult"/> indicating success or failure.</returns>
         Task<OperationResult> DeleteUserAsAdminAsync(Guid userId, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Updates a user's data as an administrator asynchronously.
+        /// </summary>
+        /// <param name="command">The command containing the user's updated details.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="OperationResult"/> indicating success or failure.</returns>
+        Task<OperationResult> UpdateUserAsAdminAsync(UpdateUserCommand command, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Resets a user's password as an administrator asynchronously.
+        /// </summary>
+        /// <param name="command">The command containing the user's ID and new password.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="OperationResult"/> indicating success or failure.</returns>
+        Task<OperationResult> AdminResetPasswordAsync(AdminResetPasswordCommand command, CancellationToken cancellationToken);
     }
 }
