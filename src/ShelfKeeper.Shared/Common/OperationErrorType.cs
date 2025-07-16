@@ -21,6 +21,11 @@ public enum OperationErrorType
     UnauthorizedError,
 
     /// <summary>
+    /// Indicates a forbidden access error.
+    /// </summary>
+    ForbiddenError,
+
+    /// <summary>
     /// Indicates a conflict error (e.g., resource already exists).
     /// </summary>
     ConflictError,
@@ -28,5 +33,10 @@ public enum OperationErrorType
     /// <summary>
     /// Indicates an internal server error.
     /// </summary>
-    InternalServerError
+    InternalServerError,
+
+    /// <summary>
+    /// Indicates an error from an external service.
+    /// </summary>
+    ExternalServiceError
 }

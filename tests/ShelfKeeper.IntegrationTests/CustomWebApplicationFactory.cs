@@ -11,17 +11,20 @@ using ShelfKeeper.Infrastructure.Persistence;
 using ShelfKeeper.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using Moq;
 
 namespace ShelfKeeper.IntegrationTests
 {
     public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyncLifetime
     {
         public Mock<IBarcodeScannerService> MockBarcodeScannerService { get; private set; }
+        public Mock<IStripeService> MockStripeService { get; private set; }
         private readonly PostgreSqlContainer _postgreSqlContainer = new PostgreSqlBuilder().Build();
 
         public CustomWebApplicationFactory()
         {
             MockBarcodeScannerService = new Mock<IBarcodeScannerService>();
+            MockStripeService = new Mock<IStripeService>();
         }
 
         public async Task InitializeAsync()
@@ -60,6 +63,30 @@ namespace ShelfKeeper.IntegrationTests
                 });
 
                 services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
+
+                // Remove the app's IBarcodeScannerService registration.
+                ServiceDescriptor? barcodeScannerDescriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(IBarcodeScannerService));
+
+                if (barcodeScannerDescriptor != null)
+                {
+                    services.Remove(barcodeScannerDescriptor);
+                }
+
+                // Add a mocked IBarcodeScannerService.
+                services.AddSingleton(MockBarcodeScannerService.Object);
+
+                // Remove the app's IStripeService registration.
+                ServiceDescriptor? stripeServiceDescriptor = services.SingleOrDefault(
+                    d => d.ServiceType == typeof(IStripeService));
+
+                if (stripeServiceDescriptor != null)
+                {
+                    services.Remove(stripeServiceDescriptor);
+                }
+
+                // Add a mocked IStripeService.
+                services.AddSingleton(MockStripeService.Object);
 
                 // Build the service provider.
                 ServiceProvider sp = services.BuildServiceProvider();

@@ -25,9 +25,24 @@ namespace ShelfKeeper.Domain.Entities
         public User User { get; set; }
 
         /// <summary>
-        /// Gets or sets the name of the subscription plan (e.g., "Free", "Plus", "Premium").
+        /// Gets or sets the name of the subscription plan (e.g., "Free", "Basic", "Premium").
         /// </summary>
-        public string Plan { get; set; }
+        public SubscriptionPlan Plan { get; set; }
+
+        /// <summary>
+        /// Gets or sets the current status of the subscription.
+        /// </summary>
+        public SubscriptionStatus Status { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Stripe customer ID associated with this subscription.
+        /// </summary>
+        public string? StripeCustomerId { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Stripe subscription ID associated with this subscription.
+        /// </summary>
+        public string? StripeSubscriptionId { get; set; }
 
         /// <summary>
         /// Gets or sets the start date and time of the subscription.
@@ -56,11 +71,6 @@ namespace ShelfKeeper.Domain.Entities
             if (baseValidation.IsFailure)
             {
                 errors.AddRange(baseValidation.Errors);
-            }
-
-            if (string.IsNullOrWhiteSpace(Plan))
-            {
-                errors.Add(new OperationError("Subscription plan cannot be empty.", OperationErrorType.ValidationError));
             }
 
             if (EndTime < StartTime)

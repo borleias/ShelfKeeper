@@ -7,6 +7,10 @@ using System.Net.Http.Json;
 using System.Net;
 using ShelfKeeper.Application.Services.Users.Models;
 using ShelfKeeper.Shared.Common;
+using ShelfKeeper.Application.Services.Users;
+using Microsoft.Extensions.DependencyInjection;
+using ShelfKeeper.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 namespace ShelfKeeper.IntegrationTests
 {

@@ -22,6 +22,8 @@ using Microsoft.OpenApi.Models;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using ShelfKeeper.Application.Services.FeatureGates;
+using ShelfKeeper.Application.Services.Subscriptions;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +42,10 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IAdminUserService, AdminUserService>(provider =>
     new AdminUserService(provider.GetRequiredService<IApplicationDbContext>(), provider.GetRequiredService<IPasswordHasher>()));
 builder.Services.AddScoped<IMediaItemService, MediaItemService>();
+builder.Services.AddScoped<ISubscriptionService, SubscriptionService>(provider =>
+    new SubscriptionService(provider.GetRequiredService<IApplicationDbContext>(), provider.GetRequiredService<IStripeService>()));
+builder.Services.AddScoped<IFeatureGateService, FeatureGateService>(provider =>
+    new FeatureGateService(provider.GetRequiredService<ISubscriptionService>(), provider.GetRequiredService<IApplicationDbContext>()));
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")).UseSnakeCaseNamingConvention());
@@ -51,6 +57,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IBarcodeScannerService, BarcodeScannerService>();
 builder.Services.AddSingleton<IJwtService, JwtService>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+builder.Services.AddSingleton<IStripeService, StripeService>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

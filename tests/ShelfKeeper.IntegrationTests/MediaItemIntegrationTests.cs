@@ -247,7 +247,54 @@ namespace ShelfKeeper.IntegrationTests
             responsePaginated.EnsureSuccessStatusCode();
             var listPaginated = await responsePaginated.Content.ReadFromJsonAsync<ListMediaItemsResponse>();
             Assert.Equal(4, listPaginated.TotalCount);
-            Assert.Equal(2, listPaginated.MediaItems.Count);
+            Assert.Equal(2, listPaginated.MediaItems.Count());
+        }
+
+        [Fact]
+        public async Task CreateMediaItem_FreePlanExceeded_ShouldReturnForbidden()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            var user = await RegisterAndLoginUser("freelimit@example.com", "Password123!");
+            _client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", user.Token);
+
+            // Set user to Free plan (default)
+            // Create 10 media items (Free plan limit)
+            for (int i = 0; i < 10; i++)
+            {
+                var createCommand = new CreateMediaItemCommand
+                (
+                    UserId: user.UserId,
+                    Title: $"Book {i}",
+                    Type: "Book",
+                    Year: 2000 + i,
+                    IsbnUpc: $"ISBN{i}",
+                    Notes: "",
+                    Progress: "",
+                    LocationId: null,
+                    AuthorId: null
+                );
+                var response = await _client.PostAsJsonAsync("/api/v1/mediaitems", createCommand);
+                response.EnsureSuccessStatusCode();
+            }
+
+            // Act: Try to create one more media item
+            var command = new CreateMediaItemCommand
+            (
+                UserId: user.UserId,
+                Title: "Exceeding Book",
+                Type: "Book",
+                Year: 2025,
+                IsbnUpc: "ISBN_EXCEED",
+                Notes: "",
+                Progress: "",
+                LocationId: null,
+                AuthorId: null
+            );
+            var finalResponse = await _client.PostAsJsonAsync("/api/v1/mediaitems", command);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Forbidden, finalResponse.StatusCode);
         }
 
         private async Task<LoginUserResponse> RegisterAndLoginUser(string email, string password)

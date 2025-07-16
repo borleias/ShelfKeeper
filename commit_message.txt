@@ -1,8 +1,11 @@
-feat: Add Prometheus and Grafana for monitoring
+feat(admin): Implement remaining admin user management features
 
-This commit integrates Prometheus and Grafana into the Docker Compose setup for application monitoring.
+This commit completes the administrator access for global user management by implementing the remaining features:
 
-- Added `docker/prometheus` and `docker/grafana` directories.
-- Created `prometheus.yml` for basic scraping configuration.
-- Updated `docker-compose.yml` to include Prometheus and Grafana services.
-- Added `docker/grafana/` to `.gitignore` to prevent tracking Grafana data.
+- **Update user data:** Admins can now update the email and name of any user.
+- **Admin password reset:** Admins can now reset the password of any user.
+- **Updated `Models.cs`** with new command objects (`UpdateUserCommand`, `AdminResetPasswordCommand`).
+- **Updated `IAdminUserService` and `AdminUserService`** with corresponding methods and their implementations.
+- **Updated `AdminController`** with new API endpoints for these functionalities.
+- **Added/updated unit tests** in `AdminUserServiceTests` to cover the new admin methods.
+- **Added/updated integration tests** in `AdminIntegrationTests` to verify the new admin API endpoints.

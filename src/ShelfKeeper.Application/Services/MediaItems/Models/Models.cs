@@ -34,7 +34,8 @@ namespace ShelfKeeper.Application.Services.MediaItems.Models
     /// <param name="MediaItemId">The ID of the newly created media item.</param>
     /// <param name="Title">The title of the newly created media item.</param>
     /// <param name="Type">The type of the newly created media item.</param>
-    public record CreateMediaItemResponse(Guid MediaItemId, string Title, string Type);
+    /// <param name="IsbnUpc">The ISBN or UPC of the newly created media item.</param>
+    public record CreateMediaItemResponse(Guid MediaItemId, string Title, string Type, string? IsbnUpc);
 
     /// <summary>
     /// Represents a query to retrieve a media item by its ID.

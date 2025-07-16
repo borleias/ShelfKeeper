@@ -9,6 +9,8 @@ using ShelfKeeper.Application.Services.MediaItems.Models;
 using Microsoft.AspNetCore.Authorization;
 using ShelfKeeper.Shared.Common;
 using System.Security.Claims;
+using ShelfKeeper.Domain.Common;
+using ShelfKeeper.WebApi.Filters;
 
 namespace ShelfKeeper.WebApi.Controllers
 {
@@ -38,6 +40,7 @@ namespace ShelfKeeper.WebApi.Controllers
         /// <param name="command">The command containing the media item details.</param>
         /// <returns>An <see cref="IActionResult"/> representing the operationResult of the operation.</returns>
         [HttpPost]
+        [FeatureGate(FeatureType.MediaItemLimit)]
         public async Task<IActionResult> Create([FromBody] CreateMediaItemCommand command)
         {
             var userId = GetUserId();

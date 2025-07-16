@@ -51,7 +51,7 @@ namespace ShelfKeeper.Application.Services.MediaItems
             _context.MediaItems.Add(mediaItem);
             await _context.SaveChangesAsync(cancellationToken);
 
-            return OperationResult<CreateMediaItemResponse>.Success(new CreateMediaItemResponse(mediaItem.Id, mediaItem.Title, mediaItem.Type));
+            return OperationResult<CreateMediaItemResponse>.Success(new CreateMediaItemResponse(mediaItem.Id, mediaItem.Title, mediaItem.Type, mediaItem.IsbnUpc));
         }
 
         /// <summary>

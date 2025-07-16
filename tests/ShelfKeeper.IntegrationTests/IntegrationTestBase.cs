@@ -10,6 +10,7 @@ using ShelfKeeper.Infrastructure.Persistence;
 using System.Net.Http.Json;
 using ShelfKeeper.Application.Services.Users.Models;
 using Newtonsoft.Json;
+using Microsoft.EntityFrameworkCore;
 
 namespace ShelfKeeper.IntegrationTests
 {
