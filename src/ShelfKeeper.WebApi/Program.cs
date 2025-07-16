@@ -58,6 +58,9 @@ builder.Services.AddScoped<IBarcodeScannerService, BarcodeScannerService>();
 builder.Services.AddSingleton<IJwtService, JwtService>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IStripeService, StripeService>();
+builder.Services.AddScoped<IEmailService, DummyEmailService>();
+builder.Services.Configure<SubscriptionCheckerSettings>(builder.Configuration.GetSection("SubscriptionCheckerSettings"));
+builder.Services.AddHostedService<SubscriptionDowngradeChecker>();
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
