@@ -40,6 +40,11 @@ namespace ShelfKeeper.Domain.Entities
         public DateTime? PasswordResetTokenExpiration { get; set; }
 
         /// <summary>
+        /// Gets or sets the role of the user.
+        /// </summary>
+        public UserRole Role { get; set; } = UserRole.User;
+
+        /// <summary>
         /// Gets or sets the collection of media items owned by this user.
         /// </summary>
         public ICollection<MediaItem> MediaItems { get; set; }

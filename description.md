@@ -24,7 +24,13 @@ Damit du von Anfang an **geringste Hürden beim Hinzufügen** hast und eine ger�
 * Passwort-Reset („Passwort vergessen“)
 * Passwort ändern
 * Account löschen
-* Administratorzugang, um Nutzer global zu verwalten
+* Administratorzugang, um Nutzer global zu verwalten, mit den Funktionen:
+  * alle Benutzer auflisten
+  * Rufe Details eines beliebigen Benutzers ab
+  * Aktualisiere die Rolle eines Benutzers
+  * Lösche einen beliebigen Benutzer
+  * Ändere die Daten eines beliebigen Benutzers
+  * Ändere das Passwort eines beliebigen Benutzers
 
 #### 📚 Medienverwaltung (Metadaten)
 

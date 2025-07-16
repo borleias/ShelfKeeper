@@ -48,4 +48,20 @@ namespace ShelfKeeper.Application.Services.Users.Models
     /// </summary>
     /// <param name="UserId">The unique identifier of the user to delete.</param>
     public record DeleteUserCommand(Guid UserId);
+
+    /// <summary>
+    /// Represents a data transfer object for user information.
+    /// </summary>
+    /// <param name="UserId">The unique identifier of the user.</param>
+    /// <param name="Email">The email address of the user.</param>
+    /// <param name="Name">The name of the user.</param>
+    /// <param name="Role">The role of the user.</param>
+    public record UserDto(Guid UserId, string Email, string Name, string Role);
+
+    /// <summary>
+    /// Represents a command to update a user's role.
+    /// </summary>
+    /// <param name="UserId">The ID of the user whose role is to be updated.</param>
+    /// <param name="NewRole">The new role for the user.</param>
+    public record UpdateUserRoleCommand(Guid UserId, string NewRole);
 }

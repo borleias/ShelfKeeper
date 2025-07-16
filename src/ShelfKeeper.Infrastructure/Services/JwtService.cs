@@ -33,8 +33,9 @@ namespace ShelfKeeper.Infrastructure.Services
         /// <param name="userId">The unique identifier of the user.</param>
         /// <param name="email">The email of the user.</param>
         /// <param name="name">The name of the user.</param>
+        /// <param name="role">The role of the user.</param>
         /// <returns>A string representing the generated JWT token.</returns>
-        public string GenerateToken(Guid userId, string email, string name)
+        public string GenerateToken(Guid userId, string email, string name, string role)
         {
             SecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -43,7 +44,8 @@ namespace ShelfKeeper.Infrastructure.Services
             {
                 new Claim(JwtRegisteredClaimNames.Sub, userId.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, email),
-                new Claim(ClaimTypes.Name, name)
+                new Claim(ClaimTypes.Name, name),
+                new Claim(ClaimTypes.Role, role)
             };
 
             JwtSecurityToken token = new JwtSecurityToken(

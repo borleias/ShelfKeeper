@@ -47,9 +47,10 @@ DECLARE
 BEGIN
 
     -- 1. Users
-    INSERT INTO users (id, email, password_hash, name, created_at, last_updated_at) VALUES
-    (user_alice_id, 'alice@example.com', '$2a$11$8s4b.yY2UoM1C.vCoLd6a.jV5.Y.b.U3yL9G.D.t.W.g.H.i.J.k', 'Alice', NOW(), NOW()),
-    (user_bob_id, 'bob@example.com', '$2a$11$8s4b.yY2UoM1C.vCoLd6a.jV5.Y.b.U3yL9G.D.t.W.g.H.i.J.k', 'Bob', NOW(), NOW());
+    INSERT INTO users (id, email, password_hash, name, created_at, last_updated_at, role) VALUES
+    (user_alice_id, 'alice@example.com', '$2a$11$8s4b.yY2UoM1C.vCoLd6a.jV5.Y.b.U3yL9G.D.t.W.g.H.i.J.k', 'Alice', NOW(), NOW(), 'User'),
+    (user_bob_id, 'bob@example.com', '$2a$11$8s4b.yY2UoM1C.vCoLd6a.jV5.Y.b.U3yL9G.D.t.W.g.H.i.J.k', 'Bob', NOW(), NOW(), 'User'),
+    (user_admin_id, 'admin@example.com', '$2a$11$8s4b.yY2UoM1C.vCoLd6a.jV5.Y.b.U3yL9G.D.t.W.g.H.i.J.k', 'Admin User', NOW(), NOW(), 'Admin');
 
     -- 2. Authors
     INSERT INTO authors (id, name, created_at, last_updated_at) VALUES

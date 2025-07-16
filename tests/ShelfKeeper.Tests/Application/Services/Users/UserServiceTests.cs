@@ -59,12 +59,12 @@ namespace ShelfKeeper.Tests.Application.Services.Users
         {
             // Arrange
             var query = new LoginUserQuery("test@example.com", "password123");
-            var user = new User { Id = Guid.NewGuid(), Email = query.Email, PasswordHash = "hashedpassword", Name = "Test User" };
+            var user = new User { Id = Guid.NewGuid(), Email = query.Email, PasswordHash = "hashedpassword", Name = "Test User", Role = ShelfKeeper.Domain.Common.UserRole.User };
             var users = new List<User> { user };
 
             _mockContext.Setup(c => c.Users).ReturnsDbSet(users);
             _mockPasswordHasher.Setup(ph => ph.VerifyPassword(query.Password, user.PasswordHash)).Returns(true);
-            _mockJwtService.Setup(js => js.GenerateToken(user.Id, user.Email, user.Name)).Returns("jwt_token");
+            _mockJwtService.Setup(js => js.GenerateToken(user.Id, user.Email, user.Name, user.Role.ToString())).Returns("jwt_token");
 
             // Act
             var operationResult = await _userService.LoginUserAsync(query, CancellationToken.None);

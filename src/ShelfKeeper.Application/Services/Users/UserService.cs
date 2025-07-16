@@ -71,7 +71,7 @@ namespace ShelfKeeper.Application.Services.Users
                 return OperationResult<LoginUserResponse>.Failure("Invalid credentials.", OperationErrorType.UnauthorizedError);
             }
 
-            string token = _jwtService.GenerateToken(user.Id, user.Email, user.Name);
+            string token = _jwtService.GenerateToken(user.Id, user.Email, user.Name, user.Role.ToString());
 
             return OperationResult<LoginUserResponse>.Success(new LoginUserResponse(user.Id, user.Email, user.Name, token));
         }
