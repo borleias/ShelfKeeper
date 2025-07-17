@@ -1,3 +1,23 @@
+# Visual Studio temporary files
+.vs/
+*.user
+*.suo
+*.userprefs
 
-# Ignore PostgreSQL data directory
+# Build artifacts
+bin/
+obj/
+
+# Rider IDE files
+.idea/
+
+# Package directories
+packages/
+node_modules/
+
+# Logs
+log/
+*.log
+
+# Database data
 docker/postgres/data/
