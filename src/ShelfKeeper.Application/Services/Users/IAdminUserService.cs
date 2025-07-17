@@ -60,5 +60,13 @@ namespace ShelfKeeper.Application.Services.Users
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
         /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="OperationResult"/> indicating success or failure.</returns>
         Task<OperationResult> AdminResetPasswordAsync(AdminResetPasswordCommand command, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Changes a user's password as an administrator asynchronously.
+        /// </summary>
+        /// <param name="command">The command containing the user's ID and new password.</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+        /// <returns>A <see cref="Task{TResult}"/> representing the asynchronous operation. The task result contains a <see cref="OperationResult"/> indicating success or failure.</returns>
+        Task<OperationResult> ChangeUserPasswordAsAdminAsync(AdminChangePasswordCommand command, CancellationToken cancellationToken);
     }
 }

@@ -178,5 +178,112 @@ namespace ShelfKeeper.IntegrationTests
             var loginResponse = await _client.PostAsJsonAsync("/api/v1/users/login", loginQuery);
             loginResponse.EnsureSuccessStatusCode();
         }
+
+        [Fact]
+        public async Task ChangeUserPassword_AsAdmin_ShouldChangePassword()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            Assert.NotNull(allUsers);
+            
+            var aliceUser = allUsers.FirstOrDefault(u => u.Email == "alice@example.com");
+            Assert.NotNull(aliceUser);
+            var userIdToChange = aliceUser.UserId;
+
+            var command = new AdminChangePasswordCommand(userIdToChange, "ChangedPassword123!");
+
+            // Act
+            var response = await _client.PutAsJsonAsync($"/api/v1/admin/users/{userIdToChange}/password", command);
+
+            // Assert
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Verify new password works by logging in with it
+            var loginQuery = new LoginUserQuery("alice@example.com", "ChangedPassword123!");
+            var loginResponse = await _client.PostAsJsonAsync("/api/v1/users/login", loginQuery);
+            loginResponse.EnsureSuccessStatusCode();
+        }
+
+        [Fact]
+        public async Task ChangeUserPassword_WithMismatchedIds_ShouldReturnBadRequest()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            Assert.NotNull(allUsers);
+            
+            var aliceUser = allUsers.FirstOrDefault(u => u.Email == "alice@example.com");
+            Assert.NotNull(aliceUser);
+            var correctUserId = aliceUser.UserId;
+            var incorrectUserId = Guid.NewGuid(); // Some other random ID
+
+            var command = new AdminChangePasswordCommand(correctUserId, "ChangedPassword123!");
+
+            // Act
+            var response = await _client.PutAsJsonAsync($"/api/v1/admin/users/{incorrectUserId}/password", command);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task ChangeUserPassword_AsRegularUser_ShouldReturnForbidden()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsUserAsync("alice@example.com", "password123"); // Log in as regular user
+
+            var allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            Assert.Equal(HttpStatusCode.Forbidden, allUsersResponse.StatusCode);
+
+            // Get admin user ID (assuming we know it from somewhere)
+            await AuthenticateAsAdminAsync(); // Temporarily authenticate as admin
+            allUsersResponse = await _client.GetAsync("/api/v1/admin/users");
+            allUsersResponse.EnsureSuccessStatusCode();
+            var allUsers = await allUsersResponse.Content.ReadFromJsonAsync<List<UserDto>>();
+            Assert.NotNull(allUsers);
+            
+            var adminUser = allUsers.FirstOrDefault(u => u.Role == UserRole.Admin.ToString());
+            Assert.NotNull(adminUser);
+            var adminId = adminUser.UserId;
+            
+            // Re-authenticate as regular user
+            await AuthenticateAsUserAsync("alice@example.com", "password123");
+            
+            var command = new AdminChangePasswordCommand(adminId, "ChangedPassword123!");
+
+            // Act
+            var response = await _client.PutAsJsonAsync($"/api/v1/admin/users/{adminId}/password", command);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task ChangeUserPassword_WithNonExistentUser_ShouldReturnNotFound()
+        {
+            // Arrange
+            await ResetDatabaseAsync();
+            await AuthenticateAsAdminAsync();
+
+            var nonExistentUserId = Guid.NewGuid();
+            var command = new AdminChangePasswordCommand(nonExistentUserId, "ChangedPassword123!");
+
+            // Act
+            var response = await _client.PutAsJsonAsync($"/api/v1/admin/users/{nonExistentUserId}/password", command);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        }
     }
 }

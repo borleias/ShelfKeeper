@@ -169,5 +169,33 @@ namespace ShelfKeeper.WebApi.Controllers
             }
             return NoContent();
         }
+
+        /// <summary>
+        /// Changes a user's password as an administrator.
+        /// </summary>
+        /// <param name="id">The ID of the user whose password is to be changed.</param>
+        /// <param name="command">The command containing the user's new password.</param>
+        /// <returns>No content.</returns>
+        [HttpPut("users/{id}/password")]
+        public async Task<IActionResult> ChangeUserPassword(Guid id, [FromBody] AdminChangePasswordCommand command)
+        {
+            if (id != command.UserId)
+            {
+                return BadRequest();
+            }
+            
+            OperationResult result = await _adminUserService.ChangeUserPasswordAsAdminAsync(command, CancellationToken.None);
+            
+            if (result.IsFailure)
+            {
+                if (result.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
+                {
+                    return NotFound(result.Errors);
+                }
+                return BadRequest(result.Errors);
+            }
+            
+            return NoContent();
+        }
     }
 }

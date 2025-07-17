@@ -135,5 +135,25 @@ namespace ShelfKeeper.Application.Services.Users
 
             return OperationResult.Success();
         }
+
+        /// <summary>
+        /// Changes a user's password as an administrator asynchronously.
+        /// </summary>
+        public async Task<OperationResult> ChangeUserPasswordAsAdminAsync(AdminChangePasswordCommand command, CancellationToken cancellationToken)
+        {
+            User user = await _context.Users.FindAsync(new object[] { command.UserId }, cancellationToken);
+            
+            if (user == null)
+            {
+                return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError);
+            }
+            
+            user.PasswordHash = _passwordHasher.HashPassword(command.NewPassword);
+            user.LastUpdatedAt = DateTime.UtcNow;
+            
+            await _context.SaveChangesAsync(cancellationToken);
+            
+            return OperationResult.Success();
+        }
     }
 }

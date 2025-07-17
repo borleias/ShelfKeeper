@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\ShelfKeeper.Application\ShelfKeeper.Application.csproj" />
     <ProjectReference Include="..\..\src\ShelfKeeper.Shared\ShelfKeeper.Shared.csproj" />
     <ProjectReference Include="..\..\src\ShelfKeeper.Infrastructure\ShelfKeeper.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ShelfKeeper.WebApi\ShelfKeeper.WebApi.csproj" />
   </ItemGroup>
 
 </Project>
