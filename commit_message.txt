@@ -1,11 +1,8 @@
-feat(admin): Implement remaining admin user management features
+feat(billing): Implement background tasks and email notifications for subscriptions
 
-This commit completes the administrator access for global user management by implementing the remaining features:
+This commit completes the billing module by adding background tasks for subscription management and an email notification system.
 
-- **Update user data:** Admins can now update the email and name of any user.
-- **Admin password reset:** Admins can now reset the password of any user.
-- **Updated `Models.cs`** with new command objects (`UpdateUserCommand`, `AdminResetPasswordCommand`).
-- **Updated `IAdminUserService` and `AdminUserService`** with corresponding methods and their implementations.
-- **Updated `AdminController`** with new API endpoints for these functionalities.
-- **Added/updated unit tests** in `AdminUserServiceTests` to cover the new admin methods.
-- **Added/updated integration tests** in `AdminIntegrationTests` to verify the new admin API endpoints.
+- **Implemented `IEmailService` and `DummyEmailService`** for sending email notifications.
+- **Implemented `SubscriptionDowngradeChecker`** as a background service to monitor media item limits after subscription downgrades.
+- **Made `SubscriptionDowngradeChecker` interval configurable** via `appsettings.json`.
+- **Updated `Program.cs`** to register the email service and the background checker.
