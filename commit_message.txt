@@ -1,8 +1,0 @@
-feat(billing): Implement background tasks and email notifications for subscriptions
-
-This commit completes the billing module by adding background tasks for subscription management and an email notification system.
-
-- **Implemented `IEmailService` and `DummyEmailService`** for sending email notifications.
-- **Implemented `SubscriptionDowngradeChecker`** as a background service to monitor media item limits after subscription downgrades.
-- **Made `SubscriptionDowngradeChecker` interval configurable** via `appsettings.json`.
-- **Updated `Program.cs`** to register the email service and the background checker.
