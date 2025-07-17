@@ -1,3 +1,4 @@
+
 # Visual Studio temporary files
 .vs/
 *.user
@@ -21,3 +22,6 @@ log/
 
 # Database data
 docker/postgres/data/
+
+# Grafana data
+docker/grafana/
