@@ -32,11 +32,10 @@ namespace ShelfKeeper.Application.Services.Subscriptions
         /// <param name="scopeFactory">The service scope factory.</param>
         /// <param name="emailService">The email service.</param>
         /// <param name="settings">The subscription checker settings.</param>
-        public SubscriptionDowngradeChecker(ILogger<SubscriptionDowngradeChecker> logger, IServiceScopeFactory scopeFactory, IEmailService emailService, IOptions<SubscriptionCheckerSettings> settings)
+        public SubscriptionDowngradeChecker(ILogger<SubscriptionDowngradeChecker> logger, IServiceScopeFactory scopeFactory, IOptions<SubscriptionCheckerSettings> settings)
         {
             _logger = logger;
             _scopeFactory = scopeFactory;
-            _emailService = emailService;
             _settings = settings.Value;
         }
 
@@ -56,6 +55,7 @@ namespace ShelfKeeper.Application.Services.Subscriptions
                 using (IServiceScope scope = _scopeFactory.CreateScope())
                 {
                     IApplicationDbContext dbContext = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+                    IEmailService emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
 
                     // Find users whose active subscription plan is Free or Basic
                     List<Subscription> activeSubscriptions = await dbContext.Subscriptions
@@ -83,7 +83,7 @@ namespace ShelfKeeper.Application.Services.Subscriptions
                             string subject = "ShelfKeeper: Media Item Limit Exceeded!";
                             string body = $"Dear {subscription.User.Name},\n\nYour current {subscription.Plan} plan allows a maximum of {maxMediaItems} media items. You currently have {currentMediaItems} media items.\n\nPlease upgrade your subscription or remove some items to comply with your plan's limit.\n\nBest regards,\nYour ShelfKeeper Team";
 
-                            await _emailService.SendEmailAsync(subscription.User.Email, subject, body, stoppingToken);
+                            await emailService.SendEmailAsync(subscription.User.Email, subject, body, stoppingToken);
                         }
                     }
                 }

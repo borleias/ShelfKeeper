@@ -14,6 +14,11 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    command: >
+      bash -c "
+        ./wait-for-it.sh postgres 5432 -- \
+        dotnet ShelfKeeper.WebApi.dll
+      "
 
   postgres:
     image: postgres:16
@@ -46,6 +51,11 @@ services:
     volumes:
       - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     command: --config.file=/etc/prometheus/prometheus.yml
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     depends_on:
       - webapi
     restart: unless-stopped
@@ -57,6 +67,9 @@ services:
       - "3000:3000"
     volumes:
       - ./docker/grafana:/var/lib/grafana
+    environment:
+      - GF_SERVER_PROTOCOL=http
+      - GF_SERVER_ADDR=0.0.0.0
     depends_on:
       - prometheus
     restart: unless-stopped

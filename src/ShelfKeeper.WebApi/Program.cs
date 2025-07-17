@@ -51,6 +51,22 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")).UseSnakeCaseNamingConvention());
 builder.Services.AddScoped<IApplicationDbContext>(provider => provider.GetService<ApplicationDbContext>());
 
+// Ensure the database is created and seeded on startup
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.EnsureDeleted();
+    dbContext.Database.EnsureCreated();
+}
+
+// Ensure the database is created and seeded on startup
+using (var scope = builder.Services.BuildServiceProvider().CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    dbContext.Database.EnsureDeleted();
+    dbContext.Database.EnsureCreated();
+}
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -60,7 +76,12 @@ builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
 builder.Services.AddSingleton<IStripeService, StripeService>();
 builder.Services.AddScoped<IEmailService, DummyEmailService>();
 builder.Services.Configure<SubscriptionCheckerSettings>(builder.Configuration.GetSection("SubscriptionCheckerSettings"));
-builder.Services.AddHostedService<SubscriptionDowngradeChecker>();
+
+// Only add the SubscriptionDowngradeChecker if not running from the EF Core tools
+if (!args.Any(a => a.Contains("ef")))
+{
+    builder.Services.AddHostedService<SubscriptionDowngradeChecker>();
+}
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

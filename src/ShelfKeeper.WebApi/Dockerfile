@@ -16,4 +16,6 @@ RUN dotnet publish "ShelfKeeper.WebApi.csproj" -c Release -o /app/publish /p:Use
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+COPY docker/wait-for-it.sh .
+RUN chmod +x wait-for-it.sh
 ENTRYPOINT ["dotnet", "ShelfKeeper.WebApi.dll"]
