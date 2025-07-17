@@ -262,5 +262,69 @@ namespace ShelfKeeper.Tests.Application.Services.Users
             Assert.NotEqual(initialDate, user.LastUpdatedAt);
             Assert.True(user.LastUpdatedAt > initialDate);
         }
+
+        [Fact]
+        public async Task ChangeUserPasswordAsAdminAsync_ShouldCallPasswordHasher()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Email = "test@example.com", Name = "Test User", Role = UserRole.User };
+            var users = new List<User> { user };
+            var command = new AdminChangePasswordCommand(userId, "newPassword123");
+            
+            _mockContext.Setup(c => c.Users).ReturnsDbSet(users);
+            _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
+            _mockPasswordHasher.Setup(p => p.HashPassword("newPassword123")).Returns("hashedPassword123").Verifiable();
+
+            // Act
+            var result = await _adminUserService.ChangeUserPasswordAsAdminAsync(command, CancellationToken.None);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            _mockPasswordHasher.Verify(p => p.HashPassword("newPassword123"), Times.Once);
+        }
+
+        [Fact]
+        public async Task ChangeUserPasswordAsAdminAsync_WithDatabaseError_ShouldReturnFailure()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Email = "test@example.com", Name = "Test User", Role = UserRole.User };
+            var users = new List<User> { user };
+            var command = new AdminChangePasswordCommand(userId, "newPassword123");
+            
+            _mockContext.Setup(c => c.Users).ReturnsDbSet(users);
+            _mockContext.Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>())).ThrowsAsync(new DbUpdateException("Database error", new Exception()));
+            _mockPasswordHasher.Setup(p => p.HashPassword("newPassword123")).Returns("hashedPassword123");
+
+            // Act
+            var result = await _adminUserService.ChangeUserPasswordAsAdminAsync(command, CancellationToken.None);
+
+            // Assert
+            Assert.True(result.IsFailure);
+            Assert.Contains(result.Errors, e => e.Type == OperationErrorType.InternalServerError);
+        }
+
+        [Theory]
+        [InlineData("")]
+        [InlineData(null)]
+        public async Task ChangeUserPasswordAsAdminAsync_WithInvalidPassword_ShouldReturnValidationFailure(string password)
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var user = new User { Id = userId, Email = "test@example.com", Name = "Test User", Role = UserRole.User };
+            var users = new List<User> { user };
+            var command = new AdminChangePasswordCommand(userId, password);
+            
+            _mockContext.Setup(c => c.Users).ReturnsDbSet(users);
+
+            // Act
+            var result = await _adminUserService.ChangeUserPasswordAsAdminAsync(command, CancellationToken.None);
+
+            // Assert
+            Assert.True(result.IsFailure);
+            Assert.Contains(result.Errors, e => e.Type == OperationErrorType.ValidationError);
+            _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        }
     }
 }

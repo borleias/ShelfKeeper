@@ -179,6 +179,16 @@ namespace ShelfKeeper.WebApi.Controllers
         [HttpPut("users/{id}/password")]
         public async Task<IActionResult> ChangeUserPassword(Guid id, [FromBody] AdminChangePasswordCommand command)
         {
+            if (command == null)
+            {
+                throw new ArgumentNullException(nameof(command));
+            }
+            
+            if (id == Guid.Empty || command.UserId == Guid.Empty)
+            {
+                return BadRequest();
+            }
+            
             if (id != command.UserId)
             {
                 return BadRequest();
@@ -191,6 +201,10 @@ namespace ShelfKeeper.WebApi.Controllers
                 if (result.Errors.Any(e => e.Type == OperationErrorType.NotFoundError))
                 {
                     return NotFound(result.Errors);
+                }
+                else if (result.Errors.Any(e => e.Type == OperationErrorType.InternalServerError))
+                {
+                    return StatusCode(500, result.Errors);
                 }
                 return BadRequest(result.Errors);
             }

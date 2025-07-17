@@ -26,6 +26,26 @@
             "problemMatcher": "$msCompile"
         },
         {
+            "label": "test-coverage",
+            "command": "powershell",
+            "type": "process",
+            "args": [
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                "${workspaceFolder}/run-tests-with-coverage.ps1"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated"
+            }
+        },
+        {
             "label": "watch",
             "command": "dotnet",
             "type": "process",

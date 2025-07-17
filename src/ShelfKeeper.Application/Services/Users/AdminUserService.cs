@@ -141,19 +141,40 @@ namespace ShelfKeeper.Application.Services.Users
         /// </summary>
         public async Task<OperationResult> ChangeUserPasswordAsAdminAsync(AdminChangePasswordCommand command, CancellationToken cancellationToken)
         {
-            User user = await _context.Users.FindAsync(new object[] { command.UserId }, cancellationToken);
-            
-            if (user == null)
+            if (command == null)
             {
-                return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError);
+                return OperationResult.Failure("Command cannot be null.", OperationErrorType.ValidationError);
             }
             
-            user.PasswordHash = _passwordHasher.HashPassword(command.NewPassword);
-            user.LastUpdatedAt = DateTime.UtcNow;
-            
-            await _context.SaveChangesAsync(cancellationToken);
-            
-            return OperationResult.Success();
+            if (string.IsNullOrEmpty(command.NewPassword))
+            {
+                return OperationResult.Failure("Password cannot be empty.", OperationErrorType.ValidationError);
+            }
+
+            try
+            {
+                User user = await _context.Users.FindAsync(new object[] { command.UserId }, cancellationToken);
+                
+                if (user == null)
+                {
+                    return OperationResult.Failure("User not found.", OperationErrorType.NotFoundError);
+                }
+                
+                user.PasswordHash = _passwordHasher.HashPassword(command.NewPassword);
+                user.LastUpdatedAt = DateTime.UtcNow;
+                
+                await _context.SaveChangesAsync(cancellationToken);
+                
+                return OperationResult.Success();
+            }
+            catch (DbUpdateException ex)
+            {
+                return OperationResult.Failure($"Database error: {ex.Message}", OperationErrorType.InternalServerError);
+            }
+            catch (Exception ex)
+            {
+                return OperationResult.Failure($"An unexpected error occurred: {ex.Message}", OperationErrorType.InternalServerError);
+            }
         }
     }
 }

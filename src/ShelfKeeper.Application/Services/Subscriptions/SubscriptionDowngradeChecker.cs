@@ -22,7 +22,7 @@ namespace ShelfKeeper.Application.Services.Subscriptions
     {
         private readonly ILogger<SubscriptionDowngradeChecker> _logger;
         private readonly IServiceScopeFactory _scopeFactory;
-        private readonly IEmailService _emailService;
+        
         private readonly SubscriptionCheckerSettings _settings;
 
         /// <summary>

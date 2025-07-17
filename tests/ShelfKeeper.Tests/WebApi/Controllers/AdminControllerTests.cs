@@ -104,5 +104,55 @@ namespace ShelfKeeper.Tests.WebApi.Controllers
             var badRequestResult = (BadRequestObjectResult)result;
             Assert.Equal(operationErrors, badRequestResult.Value);
         }
+
+        [Fact]
+        public async Task ChangeUserPassword_WithNullCommand_ShouldThrowArgumentNullException()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            AdminChangePasswordCommand? command = null;
+
+            // Act & Assert
+            await Assert.ThrowsAsync<ArgumentNullException>(() => _controller.ChangeUserPassword(userId, command!));
+            _mockAdminUserService.Verify(s => s.ChangeUserPasswordAsAdminAsync(It.IsAny<AdminChangePasswordCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ChangeUserPassword_WithEmptyGuidId_ShouldReturnBadRequest()
+        {
+            // Arrange
+            var userId = Guid.Empty;
+            var command = new AdminChangePasswordCommand(Guid.Empty, "newPassword123");
+
+            // Act
+            var result = await _controller.ChangeUserPassword(userId, command);
+
+            // Assert
+            Assert.IsType<BadRequestResult>(result);
+            _mockAdminUserService.Verify(s => s.ChangeUserPasswordAsAdminAsync(It.IsAny<AdminChangePasswordCommand>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
+        public async Task ChangeUserPassword_WithDatabaseError_ShouldReturnInternalServerError()
+        {
+            // Arrange
+            var userId = Guid.NewGuid();
+            var command = new AdminChangePasswordCommand(userId, "newPassword123");
+            var operationErrors = new List<OperationError>
+            {
+                new OperationError("Database error occurred.", OperationErrorType.InternalServerError)
+            };
+            _mockAdminUserService.Setup(s => s.ChangeUserPasswordAsAdminAsync(command, It.IsAny<CancellationToken>()))
+                .ReturnsAsync(OperationResult.Failure(operationErrors));
+
+            // Act
+            var result = await _controller.ChangeUserPassword(userId, command);
+
+            // Assert
+            Assert.IsType<ObjectResult>(result);
+            var objectResult = (ObjectResult)result;
+            Assert.Equal(500, objectResult.StatusCode);
+            Assert.Equal(operationErrors, objectResult.Value);
+        }
     }
 }
